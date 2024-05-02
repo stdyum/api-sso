@@ -100,8 +100,42 @@ func (h *handler) Authorize(ctx *hc.Context) {
 
 func (h *handler) setTokenCookies(ctx *hc.Context, tokens dto.TokenPairResponse) {
 	maxAge := 30 * 24 * 60 * 60 * 1000
-	domain := "." + ctx.Request.Host
+	domain := h.generateCookieHost(ctx.Request.Host)
 
 	ctx.SetCookie("access", tokens.Access, maxAge, "/", domain, true, true)
 	ctx.SetCookie("refresh", tokens.Refresh, maxAge, "/", domain, true, true)
+}
+
+func (h *handler) generateCookieHost(root string) string {
+	dotAmount := 0
+	host := ""
+	for i := len(root) - 1; i >= 0; i-- {
+		if root[i] == '/' && i != 0 && host[i-1] != '/' {
+			dotAmount = 0
+			host = ""
+			continue
+		}
+
+		if dotAmount == 2 {
+			continue
+		}
+
+		if root[i] == '.' {
+			dotAmount++
+			if dotAmount == 2 {
+				continue
+			}
+		}
+
+		host += string(root[i])
+	}
+
+	return "." + reverse(host)
+}
+
+func reverse(s string) (result string) {
+	for _, v := range s {
+		result = string(v) + result
+	}
+	return
 }
