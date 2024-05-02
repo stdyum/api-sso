@@ -13,6 +13,8 @@ type Handler interface {
 
 	Login(ctx *hc.Context)
 	UpdateToken(ctx *hc.Context)
+
+	Authorize(ctx *hc.Context)
 }
 
 type handler struct {
@@ -40,10 +42,7 @@ func (h *handler) Login(ctx *hc.Context) {
 		return
 	}
 
-	maxAge := 30 * 24 * 60 * 60 * 1000
-	domain := "." + ctx.Request.Host
-	ctx.SetCookie("access", tokens.Access, maxAge, "/", domain, true, true)
-	ctx.SetCookie("refresh", tokens.Refresh, maxAge, "/", domain, true, true)
+	h.setTokenCookies(ctx, tokens)
 
 	ctx.Status(netHttp.StatusNoContent)
 }
@@ -55,19 +54,54 @@ func (h *handler) UpdateToken(ctx *hc.Context) {
 		return
 	}
 
-	requestDTO := dto.UpdateRequest{
+	request := dto.UpdateRequest{
 		RefreshToken: refresh,
 	}
 
-	tokens, err := h.controller.Update(ctx, requestDTO)
+	tokens, err := h.controller.Update(ctx, request)
 	if err != nil {
 		_ = ctx.Error(err)
 		return
 	}
 
-	maxAge := 30 * 24 * 60 * 60 * 1000
-	ctx.SetCookie("access", tokens.Access, maxAge, "/", "", true, true)
-	ctx.SetCookie("refresh", tokens.Refresh, maxAge, "/", "", true, true)
+	h.setTokenCookies(ctx, tokens)
 
 	ctx.Status(netHttp.StatusNoContent)
+}
+
+func (h *handler) Authorize(ctx *hc.Context) {
+	access, err := ctx.Cookie("access")
+	if err != nil {
+		_ = ctx.Error(err)
+		return
+	}
+
+	refresh, err := ctx.Cookie("refresh")
+	if err != nil {
+		_ = ctx.Error(err)
+		return
+	}
+
+	request := dto.AuthorizeRequest{
+		AccessToken:  access,
+		RefreshToken: refresh,
+	}
+
+	tokens, err := h.controller.Authorize(ctx, request)
+	if err != nil {
+		_ = ctx.Error(err)
+		return
+	}
+
+	h.setTokenCookies(ctx, tokens)
+
+	ctx.JSON(netHttp.StatusOK, tokens.Access)
+}
+
+func (h *handler) setTokenCookies(ctx *hc.Context, tokens dto.TokenPairResponse) {
+	maxAge := 30 * 24 * 60 * 60 * 1000
+	domain := "." + ctx.Request.Host
+
+	ctx.SetCookie("access", tokens.Access, maxAge, "/", domain, true, true)
+	ctx.SetCookie("refresh", tokens.Refresh, maxAge, "/", domain, true, true)
 }

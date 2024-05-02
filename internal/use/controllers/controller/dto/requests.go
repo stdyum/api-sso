@@ -8,3 +8,8 @@ type LoginRequest struct {
 type UpdateRequest struct {
 	RefreshToken string `json:"refresh"`
 }
+
+type AuthorizeRequest struct {
+	AccessToken  string `json:"access"`
+	RefreshToken string `json:"refresh"`
+}
