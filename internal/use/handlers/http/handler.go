@@ -95,7 +95,7 @@ func (h *handler) Authorize(ctx *hc.Context) {
 
 	h.setTokenCookies(ctx, response.Tokens)
 
-	ctx.JSON(netHttp.StatusOK, response.User)
+	ctx.JSON(netHttp.StatusOK, response)
 }
 
 func (h *handler) setTokenCookies(ctx *hc.Context, tokens dto.TokenPairResponse) {
