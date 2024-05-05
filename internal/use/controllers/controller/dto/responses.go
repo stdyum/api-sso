@@ -2,7 +2,7 @@ package dto
 
 type TokenPairResponse struct {
 	Access  string `json:"access"`
-	Refresh string
+	Refresh string `json:"-"`
 }
 
 type UserResponse struct {

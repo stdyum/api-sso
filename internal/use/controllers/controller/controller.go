@@ -17,7 +17,7 @@ import (
 
 type Controller interface {
 	Login(ctx context.Context, request dto.LoginRequest) (dto.TokenPairResponse, error)
-	Update(ctx context.Context, request dto.UpdateRequest) (dto.TokenPairResponse, error)
+	Update(ctx context.Context, request dto.UpdateRequest) (dto.UserWithTokensResponse, error)
 	Authorize(ctx context.Context, request dto.AuthorizeRequest) (dto.UserWithTokensResponse, error)
 }
 
@@ -50,19 +50,33 @@ func (c *controller) Login(ctx context.Context, request dto.LoginRequest) (dto.T
 	}, nil
 }
 
-func (c *controller) Update(ctx context.Context, request dto.UpdateRequest) (dto.TokenPairResponse, error) {
+func (c *controller) Update(ctx context.Context, request dto.UpdateRequest) (dto.UserWithTokensResponse, error) {
 	updateRequest := entities.UpdateRequest{
 		RefreshToken: request.RefreshToken,
 	}
 
 	tokens, err := c.auth.Update(ctx, updateRequest)
 	if err != nil {
-		return dto.TokenPairResponse{}, err
+		return dto.UserWithTokensResponse{}, err
 	}
 
-	return dto.TokenPairResponse{
-		Access:  tokens.Access,
-		Refresh: tokens.Refresh,
+	claims, err := c.parseJWTToken(tokens.Access)
+	if err != nil {
+		return dto.UserWithTokensResponse{}, err
+	}
+
+	return dto.UserWithTokensResponse{
+		Tokens: dto.TokenPairResponse{
+			Access:  tokens.Access,
+			Refresh: tokens.Refresh,
+		},
+		User: dto.UserResponse{
+			Id:            claims.User.Id,
+			Login:         claims.User.Login,
+			PictureURL:    claims.User.PictureURL,
+			Email:         claims.User.Email,
+			VerifiedEmail: claims.User.VerifiedEmail,
+		},
 	}, nil
 }
 
@@ -88,29 +102,7 @@ func (c *controller) Authorize(ctx context.Context, request dto.AuthorizeRequest
 		RefreshToken: request.RefreshToken,
 	}
 
-	tokens, err := c.Update(ctx, updateRequest)
-	if err != nil {
-		return dto.UserWithTokensResponse{}, err
-	}
-
-	claims, err = c.parseJWTToken(tokens.Access)
-	if err != nil {
-		return dto.UserWithTokensResponse{}, err
-	}
-
-	return dto.UserWithTokensResponse{
-		Tokens: dto.TokenPairResponse{
-			Access:  tokens.Access,
-			Refresh: tokens.Refresh,
-		},
-		User: dto.UserResponse{
-			Id:            claims.User.Id,
-			Login:         claims.User.Login,
-			PictureURL:    claims.User.PictureURL,
-			Email:         claims.User.Email,
-			VerifiedEmail: claims.User.VerifiedEmail,
-		},
-	}, nil
+	return c.Update(ctx, updateRequest)
 }
 
 func (c *controller) parseJWTToken(token string) (claims models.Claims, err error) {

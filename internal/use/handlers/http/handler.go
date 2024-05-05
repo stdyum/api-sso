@@ -58,15 +58,15 @@ func (h *handler) UpdateToken(ctx *hc.Context) {
 		RefreshToken: refresh,
 	}
 
-	tokens, err := h.controller.Update(ctx, request)
+	response, err := h.controller.Update(ctx, request)
 	if err != nil {
 		_ = ctx.Error(err)
 		return
 	}
 
-	h.setTokenCookies(ctx, tokens)
+	h.setTokenCookies(ctx, response.Tokens)
 
-	ctx.Status(netHttp.StatusNoContent)
+	ctx.JSON(netHttp.StatusOK, response)
 }
 
 func (h *handler) Authorize(ctx *hc.Context) {
