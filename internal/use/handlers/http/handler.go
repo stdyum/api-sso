@@ -15,6 +15,8 @@ type Handler interface {
 	UpdateToken(ctx *hc.Context)
 
 	Authorize(ctx *hc.Context)
+
+	SetDefaultEnrollmentId(ctx *hc.Context)
 }
 
 type handler struct {
@@ -54,6 +56,8 @@ func (h *handler) UpdateToken(ctx *hc.Context) {
 		return
 	}
 
+	enrollment, _ := ctx.Cookie("enrollment")
+
 	request := dto.UpdateRequest{
 		RefreshToken: refresh,
 	}
@@ -65,6 +69,8 @@ func (h *handler) UpdateToken(ctx *hc.Context) {
 	}
 
 	h.setTokenCookies(ctx, response.Tokens)
+
+	response.Enrollment.Id = enrollment
 
 	ctx.JSON(netHttp.StatusOK, response)
 }
@@ -82,6 +88,8 @@ func (h *handler) Authorize(ctx *hc.Context) {
 		return
 	}
 
+	enrollment, _ := ctx.Cookie("enrollment")
+
 	request := dto.AuthorizeRequest{
 		AccessToken:  access,
 		RefreshToken: refresh,
@@ -95,15 +103,33 @@ func (h *handler) Authorize(ctx *hc.Context) {
 
 	h.setTokenCookies(ctx, response.Tokens)
 
+	response.Enrollment.Id = enrollment
+
 	ctx.JSON(netHttp.StatusOK, response)
 }
 
+func (h *handler) SetDefaultEnrollmentId(ctx *hc.Context) {
+	var request dto.SetDefaultEnrollmentIdRequest
+	if err := ctx.BindJSON(&request); err != nil {
+		_ = ctx.Error(err)
+		return
+	}
+
+	h.setDefaultSubdomainCookie(ctx, "enrollment", request.Id)
+
+	ctx.Status(netHttp.StatusNoContent)
+}
+
 func (h *handler) setTokenCookies(ctx *hc.Context, tokens dto.TokenPairResponse) {
+	h.setDefaultSubdomainCookie(ctx, "access", tokens.Access)
+	h.setDefaultSubdomainCookie(ctx, "refresh", tokens.Refresh)
+}
+
+func (h *handler) setDefaultSubdomainCookie(ctx *hc.Context, name, value string) {
 	maxAge := 30 * 24 * 60 * 60 * 1000
 	domain := h.generateCookieHost(ctx.Request.Host)
 
-	ctx.SetCookie("access", tokens.Access, maxAge, "/", domain, true, true)
-	ctx.SetCookie("refresh", tokens.Refresh, maxAge, "/", domain, true, true)
+	ctx.SetCookie(name, value, maxAge, "/", domain, true, true)
 }
 
 func (h *handler) generateCookieHost(root string) string {

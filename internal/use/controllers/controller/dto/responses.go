@@ -13,7 +13,12 @@ type UserResponse struct {
 	VerifiedEmail bool   `json:"verifiedEmail"`
 }
 
-type UserWithTokensResponse struct {
-	User   UserResponse      `json:"user"`
-	Tokens TokenPairResponse `json:"tokens"`
+type EnrollmentResponse struct {
+	Id string `json:"id"`
+}
+
+type UserWithTokensAndEnrollmentResponse struct {
+	User       UserResponse       `json:"user"`
+	Tokens     TokenPairResponse  `json:"tokens"`
+	Enrollment EnrollmentResponse `json:"enrollment"`
 }

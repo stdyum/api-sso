@@ -14,6 +14,8 @@ func (h *handler) Run() error {
 		group.POST("login", h.Login)
 		group.POST("update", h.UpdateToken)
 		group.POST("authorize", h.Authorize)
+
+		group.POST("defaults/enrollment", h.SetDefaultEnrollmentId)
 	}
 
 	return engine.Run(":" + h.port)

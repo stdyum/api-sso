@@ -13,3 +13,7 @@ type AuthorizeRequest struct {
 	AccessToken  string `json:"access"`
 	RefreshToken string `json:"refresh"`
 }
+
+type SetDefaultEnrollmentIdRequest struct {
+	Id string `json:"id"`
+}
