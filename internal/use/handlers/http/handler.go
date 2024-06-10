@@ -12,9 +12,12 @@ type Handler interface {
 	Run() error
 
 	Login(ctx *hc.Context)
+	Logout(ctx *hc.Context)
 	UpdateToken(ctx *hc.Context)
 
 	Authorize(ctx *hc.Context)
+
+	SetTokens(ctx *hc.Context)
 
 	SetDefaultEnrollmentId(ctx *hc.Context)
 }
@@ -45,6 +48,13 @@ func (h *handler) Login(ctx *hc.Context) {
 	}
 
 	h.setTokenCookies(ctx, tokens)
+
+	ctx.Status(netHttp.StatusNoContent)
+}
+
+func (h *handler) Logout(ctx *hc.Context) {
+	h.setDefaultSubdomainCookieWithMaxAge(ctx, "access", "", -1)
+	h.setDefaultSubdomainCookieWithMaxAge(ctx, "refresh", "", -1)
 
 	ctx.Status(netHttp.StatusNoContent)
 }
@@ -82,12 +92,7 @@ func (h *handler) Authorize(ctx *hc.Context) {
 		return
 	}
 
-	refresh, err := ctx.Cookie("refresh")
-	if err != nil {
-		_ = ctx.Error(err)
-		return
-	}
-
+	refresh, _ := ctx.Cookie("refresh")
 	enrollment, _ := ctx.Cookie("enrollment")
 
 	request := dto.AuthorizeRequest{
@@ -106,6 +111,23 @@ func (h *handler) Authorize(ctx *hc.Context) {
 	response.Enrollment.Id = enrollment
 
 	ctx.JSON(netHttp.StatusOK, response)
+}
+
+func (h *handler) SetTokens(ctx *hc.Context) {
+	var request dto.SetTokensRequest
+	if err := ctx.BindJSON(&request); err != nil {
+		_ = ctx.Error(err)
+		return
+	}
+
+	token := dto.TokenPairResponse{
+		Access:  request.AccessToken,
+		Refresh: request.RefreshToken,
+	}
+
+	h.setTokenCookies(ctx, token)
+
+	ctx.Status(netHttp.StatusOK)
 }
 
 func (h *handler) SetDefaultEnrollmentId(ctx *hc.Context) {
@@ -127,8 +149,11 @@ func (h *handler) setTokenCookies(ctx *hc.Context, tokens dto.TokenPairResponse)
 
 func (h *handler) setDefaultSubdomainCookie(ctx *hc.Context, name, value string) {
 	maxAge := 30 * 24 * 60 * 60 * 1000
-	domain := h.generateCookieHost(ctx.Request.Host)
+	h.setDefaultSubdomainCookieWithMaxAge(ctx, name, value, maxAge)
+}
 
+func (h *handler) setDefaultSubdomainCookieWithMaxAge(ctx *hc.Context, name, value string, maxAge int) {
+	domain := h.generateCookieHost(ctx.Request.Host)
 	ctx.SetCookie(name, value, maxAge, "/", domain, true, true)
 }
 

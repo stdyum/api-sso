@@ -35,8 +35,9 @@ func New(validator validators.Validator, auth auth.Repository) Controller {
 
 func (c *controller) Login(ctx context.Context, request dto.LoginRequest) (dto.TokenPairResponse, error) {
 	authRequest := entities.LoginRequest{
-		Login:    request.Login,
-		Password: request.Password,
+		Login:               request.Login,
+		Password:            request.Password,
+		SessionExpirationAt: request.SessionExpirationAt,
 	}
 
 	tokens, err := c.auth.Login(ctx, authRequest)

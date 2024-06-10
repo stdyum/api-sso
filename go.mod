@@ -2,7 +2,7 @@ module github.com/stdyum/api-sso
 
 go 1.22rc2
 
-require github.com/stdyum/api-common v0.0.0-20240509222811-ca00bfb06f0d
+require github.com/stdyum/api-common v0.0.0-20240608004528-4be8328dc56b
 
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect

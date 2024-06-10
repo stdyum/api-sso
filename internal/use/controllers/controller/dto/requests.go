@@ -1,8 +1,13 @@
 package dto
 
+import (
+	"time"
+)
+
 type LoginRequest struct {
-	Login    string `json:"login"`
-	Password string `json:"password"`
+	Login               string    `json:"login"`
+	Password            string    `json:"password"`
+	SessionExpirationAt time.Time `json:"sessionExpirationAt"`
 }
 
 type UpdateRequest struct {
@@ -10,6 +15,11 @@ type UpdateRequest struct {
 }
 
 type AuthorizeRequest struct {
+	AccessToken  string `json:"access"`
+	RefreshToken string `json:"refresh"`
+}
+
+type SetTokensRequest struct {
 	AccessToken  string `json:"access"`
 	RefreshToken string `json:"refresh"`
 }

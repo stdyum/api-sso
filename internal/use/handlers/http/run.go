@@ -12,8 +12,12 @@ func (h *handler) Run() error {
 	group := engine.Group("api/v1", hc.Logger(), middlewares.ErrorMiddleware())
 	{
 		group.POST("login", h.Login)
+		group.DELETE("logout", h.Logout)
 		group.POST("update", h.UpdateToken)
+
 		group.POST("authorize", h.Authorize)
+
+		group.POST("tokens", h.SetTokens)
 
 		group.POST("defaults/enrollment", h.SetDefaultEnrollmentId)
 	}
