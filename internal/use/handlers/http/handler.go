@@ -20,6 +20,7 @@ type Handler interface {
 	SetTokens(ctx *hc.Context)
 
 	SetDefaultEnrollmentId(ctx *hc.Context)
+	SetDefaultLanguage(ctx *hc.Context)
 }
 
 type handler struct {
@@ -67,6 +68,7 @@ func (h *handler) UpdateToken(ctx *hc.Context) {
 	}
 
 	enrollment, _ := ctx.Cookie("enrollment")
+	language, _ := ctx.Cookie("language")
 
 	request := dto.UpdateRequest{
 		RefreshToken: refresh,
@@ -81,6 +83,7 @@ func (h *handler) UpdateToken(ctx *hc.Context) {
 	h.setTokenCookies(ctx, response.Tokens)
 
 	response.Enrollment.Id = enrollment
+	response.Language.Code = language
 
 	ctx.JSON(netHttp.StatusOK, response)
 }
@@ -94,6 +97,7 @@ func (h *handler) Authorize(ctx *hc.Context) {
 
 	refresh, _ := ctx.Cookie("refresh")
 	enrollment, _ := ctx.Cookie("enrollment")
+	language, _ := ctx.Cookie("language")
 
 	request := dto.AuthorizeRequest{
 		AccessToken:  access,
@@ -109,6 +113,7 @@ func (h *handler) Authorize(ctx *hc.Context) {
 	h.setTokenCookies(ctx, response.Tokens)
 
 	response.Enrollment.Id = enrollment
+	response.Language.Code = language
 
 	ctx.JSON(netHttp.StatusOK, response)
 }
@@ -138,6 +143,18 @@ func (h *handler) SetDefaultEnrollmentId(ctx *hc.Context) {
 	}
 
 	h.setDefaultSubdomainCookie(ctx, "enrollment", request.Id)
+
+	ctx.Status(netHttp.StatusNoContent)
+}
+
+func (h *handler) SetDefaultLanguage(ctx *hc.Context) {
+	var request dto.SetDefaultLanguageRequest
+	if err := ctx.BindJSON(&request); err != nil {
+		_ = ctx.Error(err)
+		return
+	}
+
+	h.setDefaultSubdomainCookie(ctx, "language", request.Language)
 
 	ctx.Status(netHttp.StatusNoContent)
 }

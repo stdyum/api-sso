@@ -17,8 +17,13 @@ type EnrollmentResponse struct {
 	Id string `json:"id"`
 }
 
-type UserWithTokensAndEnrollmentResponse struct {
+type LanguageResponse struct {
+	Code string `json:"code"`
+}
+
+type UserWithTokensAndPreferencesResponse struct {
 	User       UserResponse       `json:"user"`
 	Tokens     TokenPairResponse  `json:"tokens"`
 	Enrollment EnrollmentResponse `json:"enrollment"`
+	Language   LanguageResponse   `json:"language"`
 }

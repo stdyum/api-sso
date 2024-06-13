@@ -20,6 +20,7 @@ func (h *handler) Run() error {
 		group.POST("tokens", h.SetTokens)
 
 		group.POST("defaults/enrollment", h.SetDefaultEnrollmentId)
+		group.POST("defaults/language", h.SetDefaultLanguage)
 	}
 
 	return engine.Run(":" + h.port)

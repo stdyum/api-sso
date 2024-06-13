@@ -17,8 +17,8 @@ import (
 
 type Controller interface {
 	Login(ctx context.Context, request dto.LoginRequest) (dto.TokenPairResponse, error)
-	Update(ctx context.Context, request dto.UpdateRequest) (dto.UserWithTokensAndEnrollmentResponse, error)
-	Authorize(ctx context.Context, request dto.AuthorizeRequest) (dto.UserWithTokensAndEnrollmentResponse, error)
+	Update(ctx context.Context, request dto.UpdateRequest) (dto.UserWithTokensAndPreferencesResponse, error)
+	Authorize(ctx context.Context, request dto.AuthorizeRequest) (dto.UserWithTokensAndPreferencesResponse, error)
 }
 
 type controller struct {
@@ -51,22 +51,22 @@ func (c *controller) Login(ctx context.Context, request dto.LoginRequest) (dto.T
 	}, nil
 }
 
-func (c *controller) Update(ctx context.Context, request dto.UpdateRequest) (dto.UserWithTokensAndEnrollmentResponse, error) {
+func (c *controller) Update(ctx context.Context, request dto.UpdateRequest) (dto.UserWithTokensAndPreferencesResponse, error) {
 	updateRequest := entities.UpdateRequest{
 		RefreshToken: request.RefreshToken,
 	}
 
 	tokens, err := c.auth.Update(ctx, updateRequest)
 	if err != nil {
-		return dto.UserWithTokensAndEnrollmentResponse{}, err
+		return dto.UserWithTokensAndPreferencesResponse{}, err
 	}
 
 	claims, err := c.parseJWTToken(tokens.Access)
 	if err != nil {
-		return dto.UserWithTokensAndEnrollmentResponse{}, err
+		return dto.UserWithTokensAndPreferencesResponse{}, err
 	}
 
-	return dto.UserWithTokensAndEnrollmentResponse{
+	return dto.UserWithTokensAndPreferencesResponse{
 		Tokens: dto.TokenPairResponse{
 			Access:  tokens.Access,
 			Refresh: tokens.Refresh,
@@ -81,10 +81,10 @@ func (c *controller) Update(ctx context.Context, request dto.UpdateRequest) (dto
 	}, nil
 }
 
-func (c *controller) Authorize(ctx context.Context, request dto.AuthorizeRequest) (dto.UserWithTokensAndEnrollmentResponse, error) {
+func (c *controller) Authorize(ctx context.Context, request dto.AuthorizeRequest) (dto.UserWithTokensAndPreferencesResponse, error) {
 	claims, err := c.parseJWTToken(request.AccessToken)
 	if err == nil {
-		return dto.UserWithTokensAndEnrollmentResponse{
+		return dto.UserWithTokensAndPreferencesResponse{
 			Tokens: dto.TokenPairResponse{
 				Access:  request.AccessToken,
 				Refresh: request.RefreshToken,

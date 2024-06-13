@@ -27,3 +27,7 @@ type SetTokensRequest struct {
 type SetDefaultEnrollmentIdRequest struct {
 	Id string `json:"id"`
 }
+
+type SetDefaultLanguageRequest struct {
+	Language string `json:"code"`
+}
